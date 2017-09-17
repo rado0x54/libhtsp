@@ -10,3 +10,7 @@ HTSPConnection::HTSPConnection(boost::asio::io_service &io_service, tcp::resolve
 
 }
 
+HTSPConnection::~HTSPConnection() {
+
+}
+

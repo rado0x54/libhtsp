@@ -19,6 +19,7 @@ private:
 public:
     HTSPConnection(boost::asio::io_service& io_service,
                    tcp::resolver::iterator endpoint_iterator);
+    ~HTSPConnection();
 };
 
 
