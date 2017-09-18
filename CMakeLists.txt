@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.2)
 project(libhtsp)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -7,7 +7,7 @@ find_package(Boost REQUIRED COMPONENTS system thread)
 
 add_subdirectory(pvr.hts/lib/libhts)
 
-INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
+include_directories(${Boost_INCLUDE_DIR})
 
 set(SOURCE_FILES src/HTSPConnection.cpp src/HTSPConnection.h)
 add_library(libhtsp ${SOURCE_FILES})
