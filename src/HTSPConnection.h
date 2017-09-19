@@ -7,6 +7,7 @@
 
 #include <thread>
 #include <boost/asio.hpp>
+#include <future>
 #include "HTSMessage.h"
 
 
@@ -26,15 +27,31 @@ using boost::asio::ip::tcp;
 class HTSPConnection {
 private:
     boost::asio::io_service &io_service_;
+    boost::asio::io_service::work io_service_work_;
+    tcp::resolver resolver_;
     tcp::socket tcp_socket_;
+
+    void ResolveHandler(const boost::system::error_code& err,
+                        tcp::resolver::iterator endpoint_iterator);
+
+    void ConnectHandler(const boost::system::error_code& err,
+                        tcp::resolver::iterator endpoint_iterator,
+                        std::shared_ptr<std::promise<bool>> connectPromise);
 
 
 public:
+    HTSPConnection(boost::asio::io_service &io_service);
     HTSPConnection(boost::asio::io_service &io_service,
-                   tcp::resolver::iterator endpoint_iterator);
+                   const std::string &server,
+                   const std::string &service);
 
     ~HTSPConnection();
 
+    void Connect(const std::string& server, const std::string& service);
+    std::future<bool> Connect(tcp::resolver::iterator endpoint_iterator);
+    bool IsOpen();
+
+    void connect_handler(const boost::system::error_code& error);
 
     bool SendHtsData(const HtsData &data);
 

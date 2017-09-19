@@ -9,6 +9,7 @@ include_directories(${Boost_INCLUDE_DIR})
 
 # Dynamic Boost Log Library
 add_definitions(-DBOOST_LOG_DYN_LINK)
+#add_definitions(-DBOOST_ASIO_HAS_MOVE)
 
 # Library
 set(SOURCE_FILES src/HTSPConnection.cpp src/HTSPConnection.h src/HTSMessage.cpp src/HTSMessage.h)
@@ -19,4 +20,5 @@ target_link_libraries(htsp ${Boost_LIBRARIES})
 # Sample Client
 set(CLIENT_SOURCE_FILES client/client.cpp)
 add_executable(client ${CLIENT_SOURCE_FILES})
-target_link_libraries(client htsp)
+target_link_libraries(client htsp ${Boost_LIBRARIES})
+

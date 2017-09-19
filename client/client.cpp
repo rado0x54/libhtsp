@@ -4,20 +4,39 @@
 
 #include <iostream>
 #include <boost/asio.hpp>
+#include <boost/log/trivial.hpp>
+
 #include "../src/HTSPConnection.h"
 
-boost::asio::io_service io_service;
-boost::asio::ip::tcp::resolver resolv{io_service};
-
-int main()
+int main(int argc, char* argv[])
 {
 
-    std::cout << "Hello World!" << std::endl;
+    if (argc != 3)
+    {
+        BOOST_LOG_TRIVIAL(error) << "Usage: client <ip or hostname> <service or port>";
+        return 1;
+    }
 
-    tcp::resolver::query query("192.168.184.20", "9982");
+    BOOST_LOG_TRIVIAL(info) << "Starting Test HTSP Client!";
 
-    auto conn = new HTSPConnection(io_service, resolv.resolve(query));
+    boost::asio::io_service io_service;
 
-    io_service.run();
+    auto conn = new HTSPConnection(io_service);
+
+    conn->Connect(argv[1], argv[2]);
+
+
+    std::thread t([&io_service](){ io_service.run(); });
+
+    BOOST_LOG_TRIVIAL(info) << "Running io_service in separate thread...";
+
+    // delete connection (should return io_service.run())
+    delete conn;
+
+    t.join();
+
+    BOOST_LOG_TRIVIAL(info) << "Closing Application!";
+
+    return 0;
 }
 
