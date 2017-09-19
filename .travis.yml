@@ -1,9 +1,14 @@
 language: cpp
 before_script:
-- mkdir build
-- (cd build && cmake ..)
+# Install Boost
+  - sudo apt-get update -qq
+  - sudo apt-get install libboost-thread-dev libboost-system-dev libboost-test-dev
 script:
-- (cd build && make VERBOSE=1)
+  - mkdir build
+  - (cd build && cmake ..)
+  - (cd build && make VERBOSE=1)
+  # Run Program
+  - ./build/client www.google.com http
 after_script:
-# Some Test output
-- ls -la build/
+  # Some Test output
+  - ls -la build/
