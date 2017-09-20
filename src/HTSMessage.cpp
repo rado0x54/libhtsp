@@ -387,7 +387,7 @@ HtsMessage HtsMessage::Deserialize(uint32_t length, void *buf) {
     return res.makeMsg();
 }
 
-bool HtsMessage::Serialize(uint32_t *length, void **buf) {
+bool HtsMessage::Serialize(uint32_t *length, void **buf) const {
     unsigned char *resBuf = 0;
     uint32_t resLength = 4;
     *length = 0;

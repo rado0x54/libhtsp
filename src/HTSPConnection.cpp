@@ -29,18 +29,24 @@ HTSPConnection::HTSPConnection(boost::asio::io_service &io_service, const std::s
 }
 
 HTSPConnection::~HTSPConnection() {
-
+    tcp_socket_.close();
 }
 
-void HTSPConnection::ResolveHandler(const boost::system::error_code &err,
-                                    tcp::resolver::iterator endpoint_iterator) {
-    if (!err) {
-        BOOST_LOG_TRIVIAL(info) << "successfully resolved service";
-        Connect(endpoint_iterator);
-    } else {
-        BOOST_LOG_TRIVIAL(error) << "Error while resolving endpoint: " << err.message();
-    }
-}
+//void HTSPConnection::ResolveHandler(const boost::system::error_code &err,
+//                                    tcp::resolver::iterator endpoint_iterator,
+//                                    std::shared_ptr<std::promise<bool>> connectPromisePtr) {
+//    if (!err) {
+//        BOOST_LOG_TRIVIAL(info) << "successfully resolved service";
+//
+//        auto connectFuture = Connect(endpoint_iterator);
+////        // blocking?
+//        connectPromisePtr->set_value(connectFuture);
+//
+//    } else {
+//        BOOST_LOG_TRIVIAL(error) << "Error while resolving endpoint: " << err.message();
+//        connectPromisePtr->set_value(false);
+//    }
+//}
 
 void HTSPConnection::ConnectHandler(const boost::system::error_code &err,
                                     tcp::resolver::iterator endpoint_iterator,
@@ -64,24 +70,69 @@ void HTSPConnection::ConnectHandler(const boost::system::error_code &err,
                                             connectPromisePtr
                                   ));
     } else {
-        BOOST_LOG_TRIVIAL(error) << "Error: while connecting to service: " << err.message();
+        BOOST_LOG_TRIVIAL(error) << "Error while connecting to service: " << err.message();
         connectPromisePtr->set_value(false);
     }
 
 }
 
+void HTSPConnection::WriteHandler(const boost::system::error_code &err) {
+    if (!err)
+    {
+        // Read the response status line. The response_ streambuf will
+        // automatically grow to accommodate the entire line. The growth may be
+        // limited by passing a maximum size to the streambuf constructor.
+        BOOST_LOG_TRIVIAL(info) << "successfully wrote to service";
+        uint32_t htsmsgsize;
+        size_t lenhead = read(tcp_socket_, boost::asio::buffer(&htsmsgsize, sizeof(uint32_t)));
+        htsmsgsize = ntohl(htsmsgsize);
+        BOOST_LOG_TRIVIAL(info) << "Read Message with Size: " << htsmsgsize;
+        BOOST_LOG_TRIVIAL(info) << "Size uint32_t: " << sizeof(uint32_t) << " Size read: " << lenhead;
 
-void HTSPConnection::Connect(const std::string &server, const std::string &service) {
+
+        char * buf = (char*)malloc(htsmsgsize);
+
+        size_t lenbody = read(tcp_socket_, boost::asio::buffer(buf, htsmsgsize));
+//        BOOST_LOG_TRIVIAL(info) << "Read Message with Size: " << htsmsgsize;
+        BOOST_LOG_TRIVIAL(info) << "Read #bytes; " << lenbody;
+
+
+        HtsMessage m = HtsMessage::Deserialize(htsmsgsize, buf);
+        BOOST_LOG_TRIVIAL(info) << "Got Valid Message? " << m.isValid();
+
+
+        uint32_t chall_len;
+        void * chall;
+        m.getRoot()->getBin("challenge", &chall_len, &chall);
+
+        std::string serverName = m.getRoot()->getStr("servername");
+        std::string serverVersion = m.getRoot()->getStr("serverversion");
+        uint32_t protoVersion = m.getRoot()->getU32("htspversion");
+
+        BOOST_LOG_TRIVIAL(info) << "Connected to HTSP Server " << serverName << ", version " << serverVersion << ", protocol " << protoVersion;
+
+
+        free(buf);
+    }
+    else
+    {
+        BOOST_LOG_TRIVIAL(error) << "Error while writing to socket: " << err.message();
+    }
+}
+
+
+std::future<bool> HTSPConnection::Connect(const std::string &server, const std::string &service) {
+    BOOST_LOG_TRIVIAL(trace) << "calling Connect(const std::string &server, const std::string &service)";
+
     tcp::resolver::query query(server, service);
 
-    resolver_.async_resolve(query,
-                            std::bind(&HTSPConnection::ResolveHandler, this,
-                                      std::placeholders::_1, // boost::system::error_code
-                                      std::placeholders::_2 //tcp::resolver::iterator
-                            ));
+    tcp::resolver::iterator endpoint_iterator = resolver_.resolve(query);
+
+    return Connect(endpoint_iterator);
 }
 
 std::future<bool> HTSPConnection::Connect(tcp::resolver::iterator endpoint_iterator) {
+    BOOST_LOG_TRIVIAL(trace) << "calling Connect(tcp::resolver::iterator endpoint_iterator))";
 
     // Bind does not work with rvalue, and std::promise is only moveable,
     // so allocate a shared pointer.
@@ -103,15 +154,53 @@ bool HTSPConnection::IsOpen() {
 bool HTSPConnection::SendAuth
         (const std::string &user, const std::string &pass) {
 
+
     return false;
 }
 
 bool HTSPConnection::SendHello() {
 
+    HtsMap map;
+    map.setData("method", "hello");
+    map.setData("clientname", "libhtsp");
+    map.setData("htspversion", HTSP_CLIENT_VERSION);
+
+    WriteHtsMessage(map.makeMsg());
+
+//    HtsMessage m = ReadResult(sd, sys, map.makeMsg());
+//    if(!m.isValid())
+//    {
+//        msg_Err(sd, "No valid hello response");
+//        return false;
+//    }
+
+//    uint32_t chall_len;
+//    void *chall;
+//    m.getRoot()->getBin("challenge", &chall_len, &chall);
+//
+//    std::string serverName = m.getRoot()->getStr("servername");
+//    std::string serverVersion = m.getRoot()->getStr("serverversion");
+//    uint32_t protoVersion = m.getRoot()->getU32("htspversion");
+
+
     return false;
 }
 
-bool HTSPConnection::SendHtsData(const HtsData &data) {
+bool HTSPConnection::WriteHtsMessage(const HtsMessage &msg) {
+
+    // TODO: We leak intentionally here.
+    void *buf;
+    uint32_t len;
+
+    if (!msg.Serialize(&len, &buf)) {
+
+        return false;
+    }
+
+
+
+    boost::asio::async_write(tcp_socket_, boost::asio::buffer(buf, len), std::bind(&HTSPConnection::WriteHandler, this,
+                                                     std::placeholders::_1));
 
 
     return false;

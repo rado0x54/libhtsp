@@ -23,10 +23,17 @@ int main(int argc, char* argv[])
 
     auto conn = new HTSPConnection(io_service);
 
-    conn->Connect(argv[1], argv[2]);
-
-
     std::thread t([&io_service](){ io_service.run(); });
+
+    auto connFuture = conn->Connect(argv[1], argv[2]);
+
+    // Wait until done.
+    connFuture.get();
+
+    conn->SendHello();
+
+    sleep(2);
+
 
     BOOST_LOG_TRIVIAL(info) << "Running io_service in separate thread...";
 

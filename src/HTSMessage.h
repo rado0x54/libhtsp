@@ -269,9 +269,9 @@ public:
 
     static HtsMessage Deserialize(uint32_t length, void *buf);
 
-    bool Serialize(uint32_t *length, void **buf);
+    bool Serialize(uint32_t *length, void **buf) const;
 
-    std::shared_ptr<HtsMap> getRoot() { return root; }
+    std::shared_ptr<HtsMap> getRoot() const { return root; }
 
     void setRoot(std::shared_ptr<HtsMap> newRoot) {
         root = newRoot;
