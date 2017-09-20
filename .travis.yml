@@ -1,5 +1,12 @@
 language: cpp
+sudo: required
+services:
+  - docker
+
 before_script:
+# Start a TVHeadend Container
+  - docker run --name tvheadend -p 9982:9982 dreamcat4/tvheadend
+
 # Install Boost
   - sudo apt-get update -qq
   - sudo apt-get install libboost-thread-dev libboost-system-dev libboost-log-dev
@@ -7,8 +14,8 @@ script:
   - mkdir build
   - (cd build && cmake ..)
   - (cd build && make VERBOSE=1)
-  # Run Program
-  - ./build/client www.google.com http
+    # Run Program
+  - ./build/client localhost 9982
 after_script:
   # Some Test output
   - ls -la build/
