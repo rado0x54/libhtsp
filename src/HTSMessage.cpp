@@ -320,13 +320,13 @@ HtsBin::HtsBin(uint32_t /*length*/, void *buf) {
     }
 
     data_buf = malloc(data_length);
-    memcpy(data_buf, tmpbuf, data_length);
+    std::memcpy(data_buf, tmpbuf, data_length);
 }
 
 void HtsBin::getBin(uint32_t *len, void **buf) const {
     *len = data_length;
     void *mem = malloc(data_length);
-    memcpy(mem, data_buf, data_length);
+    std::memcpy(mem, data_buf, data_length);
     *buf = mem;
 }
 
@@ -336,7 +336,7 @@ void HtsBin::setBin(uint32_t len, void *buf) {
 
     data_length = len;
     data_buf = malloc(len);
-    memcpy(data_buf, buf, len);
+    std::memcpy(data_buf, buf, len);
 }
 
 HtsBin::~HtsBin() {
@@ -438,7 +438,7 @@ void HtsMap::Serialize(void *buf) {
     tmpbuf += 6;
 
     if (getName().length() > 0) {
-        memcpy(tmpbuf, getName().c_str(), getName().length());
+        std::memcpy(tmpbuf, getName().c_str(), getName().length());
         tmpbuf += getName().length();
     }
 
@@ -471,7 +471,7 @@ void HtsList::Serialize(void *buf) {
     tmpbuf += 6;
 
     if (getName().length() > 0) {
-        memcpy(tmpbuf, getName().c_str(), getName().length());
+        std::memcpy(tmpbuf, getName().c_str(), getName().length());
         tmpbuf += getName().length();
     }
 
@@ -507,7 +507,7 @@ void HtsInt::Serialize(void *buf) {
     tmpbuf += 6;
 
     if (getName().length() > 0) {
-        memcpy(tmpbuf, getName().c_str(), getName().length());
+        std::memcpy(tmpbuf, getName().c_str(), getName().length());
         tmpbuf += getName().length();
     }
 
@@ -532,11 +532,11 @@ void HtsStr::Serialize(void *buf) {
     tmpbuf += 6;
 
     if (getName().length() > 0) {
-        memcpy(tmpbuf, getName().c_str(), getName().length());
+        std::memcpy(tmpbuf, getName().c_str(), getName().length());
         tmpbuf += getName().length();
     }
 
-    memcpy(tmpbuf, data.c_str(), data.length());
+    std::memcpy(tmpbuf, data.c_str(), data.length());
 }
 
 uint32_t HtsBin::calcSize() {
@@ -553,9 +553,9 @@ void HtsBin::Serialize(void *buf) {
     tmpbuf += 6;
 
     if (getName().length() > 0) {
-        memcpy(tmpbuf, getName().c_str(), getName().length());
+        std::memcpy(tmpbuf, getName().c_str(), getName().length());
         tmpbuf += getName().length();
     }
 
-    memcpy(tmpbuf, data_buf, data_length);
+    std::memcpy(tmpbuf, data_buf, data_length);
 }
