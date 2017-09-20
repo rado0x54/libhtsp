@@ -5,7 +5,7 @@ services:
 
 before_script:
 # Start a TVHeadend Container
-  - docker run --name tvheadend -p 9982:9982 dreamcat4/tvheadend
+  - docker run -d -p 9982:9982 dreamcat4/tvheadend
 
 # Install Boost
   - sudo apt-get update -qq
